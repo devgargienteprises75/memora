@@ -1,11 +1,17 @@
 import express from 'express'
-import { getItemsController, itemController } from '../controllers/item.controller.js'
+import { getItemsController, saveItemController, updateItemsController } from '../controllers/item.controller.js'
 
 const itemRouter = express.Router()
 
 // POST /api/item/save
-itemRouter.post("/save", itemController)
+itemRouter.post("/save", saveItemController)
 
 // GET /api/item/get-items
 itemRouter.get("/get-item", getItemsController)
+
+// PATCH /api/item/update/:itemId
+itemRouter.get("/update/:itemId", updateItemsController)
+
+// DELETE /api/item/delete/:itemId
+itemRouter.delete("/delete/:itemId", deleteItemsController)
 export default itemRouter;

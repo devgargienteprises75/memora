@@ -1,6 +1,6 @@
 import { itemModel } from "../models/item.model.js"
 
-export async function itemController(req, res){
+export async function saveItemController(req, res){
     const { url, title } = req.body
     console.log(url, title);
     
@@ -34,5 +34,48 @@ export async function getItemsController(req, res){
     res.status(200).json({
         message: "Items fetched successfully",
         items
+    })
+}
+
+export async function updateItemsController(req, res) {
+    const { title, description, tags } = req.body
+    const itemId = req.params.itemId
+
+    const item = await itemModel.findOne({ itemId })
+
+    if(!item){
+        return res.status(400).json({
+            message: "Item not valid."
+        })
+    }
+
+    await itemModel.findByIdAndUpdate(isValidItemId, {
+        title: title,
+        description: description,
+        tags: tags
+    })
+
+    res.status(200).json({
+        message: "Item updated",
+        item
+    })
+}
+
+export async function deleteItemsController(req, res) {
+    const itemId = req.params.itemId
+
+    const item = await itemModel.findOne({itemId})
+
+    if(!item){
+        return res.status(404).json({
+            message: "Item not valid"
+        })
+    }
+
+    await itemModel.findOneAndDelete(itemId)
+
+    res.status(200).json({
+        message: "Item deleted",
+        item
     })
 }
