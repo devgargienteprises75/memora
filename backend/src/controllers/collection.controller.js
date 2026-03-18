@@ -1,7 +1,7 @@
 import { collectionModel } from "../models/collections.model.js"
 
 export async function createCollectionController(req, res){
-    const { name, description, icon } = req.body
+    const { name, description } = req.body
 
     const collection = await collectionModel.create({
         name,
