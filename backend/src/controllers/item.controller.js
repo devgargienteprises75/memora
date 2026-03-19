@@ -3,14 +3,15 @@ import { itemModel } from "../models/item.model.js"
 export async function saveItemController(req, res) {
     try {
         const { url, title, contentType, collectionId } = req.body
-        const userId = req.userId  // auth middleware se aaya
+        const userId = req.cookies.userId 
+        console.log(userId);
+        
 
         if (!url || !title) {
             return res.status(400).json({ message: "url and title required" })
         }
 
         const item = await itemModel.create({
-            userId,
             url,
             title,
             contentType: contentType || 'other',
