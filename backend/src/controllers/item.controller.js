@@ -1,22 +1,44 @@
+import mongoose from "mongoose";
 import { itemModel } from "../models/item.model.js"
+import { fetchMatadata } from "../service/metadata.service.js";
+import { generateEmbedding, generateTags } from "../service/ai.service.js";
 
 export async function saveItemController(req, res) {
     try {
         const { url, title, contentType, collectionId } = req.body
-        const userId = req.cookies.userId 
-        console.log(userId);
+        const userId = req.userId 
         
 
-        if (!url || !title) {
+        if (!url) {
             return res.status(400).json({ message: "url and title required" })
         }
 
+        const id = new mongoose.Types.ObjectId(userId)
+
+        let meta = {}
+
+        try {
+            meta = await fetchMatadata(url)
+        } catch (err) {
+            console.error('Failed to fetch metadata:', err.message);
+        }
+
+        const finalTitle = title || meta.title || url
+        const finalDescription = meta.description || ''
+
+
         const item = await itemModel.create({
+            userId: id,
             url,
-            title,
+            title: finalTitle,
+            description:finalDescription,
+            image: meta.image || '',
+            siteName: meta.siteName || '',
             contentType: contentType || 'other',
             collectionId: collectionId || null
         })
+
+        processWithAi(item._id, finalTitle, finalDescription)
 
         res.status(201).json({ message: "Item saved", item })
 
@@ -25,9 +47,32 @@ export async function saveItemController(req, res) {
     }
 }
 
+
+async function processWithAi(itemId, title, description){
+    try {
+        const text = `${title}. ${description}`;
+
+        const tags = await generateTags(title, description)
+
+        const id = new mongoose.Types.ObjectId(itemId)
+
+        const updated = await itemModel.findByIdAndUpdate(
+        id, {
+           $push: { tags: { $each: tags}}
+        })
+
+        console.log('Updated item tags:', updated?.tags)
+
+        console.log(`AI processed Item ${itemId} - tags: ${tags}`);
+
+    } catch (err) {
+        console.error(`AI processing failed for itemId - ${itemId}:`, err.message);
+    }
+}
+
 export async function getItemsController(req, res) {
     try {
-        const userId = req.userId  // sirf is user ke items
+        const userId = req.userId  
 
         const items = await itemModel.find({ userId }).sort({ createdAt: -1 })
 
