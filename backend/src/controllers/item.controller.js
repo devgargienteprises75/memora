@@ -6,7 +6,7 @@ import { generateEmbedding, generateTags } from "../service/ai.service.js";
 export async function saveItemController(req, res) {
     try {
         const { url, title, contentType, collectionId } = req.body
-        const userId = req.userId 
+        const userId = req.user.id 
         
 
         if (!url) {
@@ -38,9 +38,12 @@ export async function saveItemController(req, res) {
             collectionId: collectionId || null
         })
 
-        processWithAi(item._id, finalTitle, finalDescription)
+        await processWithAi(item._id, finalTitle, finalDescription)
 
-        res.status(201).json({ message: "Item saved", item })
+        // Fetch the updated item with tags
+        const itemWithTags = await itemModel.findById(item._id)
+
+        res.status(201).json({ message: "Item saved", item: itemWithTags })
 
     } catch (err) {
         res.status(500).json({ message: err.message })
@@ -48,31 +51,31 @@ export async function saveItemController(req, res) {
 }
 
 
-async function processWithAi(itemId, title, description){
+async function processWithAi(itemId, title, description) {
     try {
-        const text = `${title}. ${description}`;
-
         const tags = await generateTags(title, description)
+        
+        console.log('Tags generated:', tags)
+        console.log('Saving to itemId:', itemId)
 
-        const id = new mongoose.Types.ObjectId(itemId)
+        await itemModel.findByIdAndUpdate(
+            itemId,
+            { $set: { tags: tags } },
+            { new: true }
+        )
 
-        const updated = await itemModel.findByIdAndUpdate(
-        id, {
-           $push: { tags: { $each: tags}}
-        })
-
-        console.log('Updated item tags:', updated?.tags)
-
-        console.log(`AI processed Item ${itemId} - tags: ${tags}`);
+        // Confirm karo DB se seedha
+        const check = await itemModel.findById(itemId)
+        console.log('DB check tags:', check?.tags)
 
     } catch (err) {
-        console.error(`AI processing failed for itemId - ${itemId}:`, err.message);
+        console.error(`AI processing failed:`, err.message)
     }
 }
 
 export async function getItemsController(req, res) {
     try {
-        const userId = req.userId  
+        const userId = new mongoose.Types.ObjectId(req.user.id)  
 
         const items = await itemModel.find({ userId }).sort({ createdAt: -1 })
 
@@ -87,7 +90,7 @@ export async function updateItemsController(req, res) {
     try {
         const { title, description, tags } = req.body
         const itemId = req.params.itemId
-        const userId = req.userId
+        const userId = new mongoose.Types.ObjectId(req.user.id)
 
         const item = await itemModel.findOne({ _id: itemId, userId })
         
@@ -111,7 +114,7 @@ export async function updateItemsController(req, res) {
 export async function deleteItemsController(req, res) {
     try {
         const itemId = req.params.itemId
-        const userId = req.userId
+        const userId = new mongoose.Types.ObjectId(req.user.id)
 
         const item = await itemModel.findOne({ _id: itemId, userId })
 

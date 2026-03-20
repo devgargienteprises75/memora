@@ -52,23 +52,12 @@ const itemSchema = new mongoose.Schema({
         ref: "collection"
     },
 
-    // Timestamps
-    createAt: {
-        type: Date,
-        default: Date.now
-    },
-
-    updatedAt: {
-        type: Date,
-        default: Date.now
-    },
-
     // Resurfacing 
     lastResurfaceDate: Date,
     resurfaceCount: {
         type: Number,
         default: 0
     }
-}, { timestamps: true})
+}, { timestamps: true })
 
 export const itemModel = mongoose.model("items", itemSchema)

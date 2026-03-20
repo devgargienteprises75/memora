@@ -1,7 +1,11 @@
 import express from 'express'
 import { deleteItemsController, getItemsController, saveItemController, updateItemsController } from '../controllers/item.controller.js'
+import { identifyUser } from '../middleware/auth.middleware.js'
 
 const itemRouter = express.Router()
+
+// Apply auth middleware to all routes
+itemRouter.use(identifyUser)
 
 // POST /api/item/save
 itemRouter.post("/save", saveItemController)
