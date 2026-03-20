@@ -2,7 +2,9 @@ import 'dotenv/config'
 import app from './src/app.js'
 import { connectToDb } from './src/config/database.js'
 import { scrape } from './demoParse.js'
+import { initCollection } from './src/service/qdrant.service.js'
 
 connectToDb()
+initCollection()
 
 app.listen(3001, () => console.log("Server is running on port 3001"))
